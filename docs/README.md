@@ -1,6 +1,6 @@
-autopy
+@simonfischer04/autopy
 
-# autopy
+# @simonfischer04/autopy
 
 ## Table of contents
 

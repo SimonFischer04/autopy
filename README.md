@@ -10,11 +10,18 @@ Autopy works on Windows (32-bit and 64-bit), Linux (x86_64, i686, and aarch64), 
 
 ## Installation
 
-You can install autopy using yarn or npm:
+This is a fork of [tweaselORG/autopy](https://github.com/tweaselORG/autopy), published as `@simonfischer04/autopy`. You can install it using yarn or npm:
 
 ```sh
-yarn add autopy
-# or `npm i autopy`
+yarn add @simonfischer04/autopy
+# or `npm i @simonfischer04/autopy`
+```
+
+To keep importing from `autopy`, install it under an alias instead:
+
+```sh
+yarn add autopy@npm:@simonfischer04/autopy
+# or `npm i autopy@npm:@simonfischer04/autopy`
 ```
 
 ## API reference
