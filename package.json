@@ -1,6 +1,6 @@
 {
     "name": "@simonfischer04/autopy",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "Library for depending on Python packages from JavaScript that will automatically manage a venv and download Python and pip dependencies.",
     "bugs": "https://github.com/SimonFischer04/autopy/issues",
     "repository": {
@@ -31,9 +31,6 @@
     "files": [
         "/dist"
     ],
-    "publishConfig": {
-        "access": "public"
-    },
     "scripts": {
         "build": "parcel build",
         "fix": "yarn eslint . --ignore-path .gitignore --ext .js,.jsx,.ts,.tsx --fix",
@@ -90,5 +87,8 @@
     },
     "engines": {
         "node": ">=14.0.0"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }
