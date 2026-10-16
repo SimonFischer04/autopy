@@ -8,9 +8,15 @@ Autopy is designed for scenarios where you need to depend on Python tools and li
 
 Autopy works on Windows (32-bit and 64-bit), Linux (x86_64, i686, and aarch64), and macOS (x86_64 and arm64). It uses [python-build-standalone](https://github.com/indygreg/python-build-standalone) to download pre-built Python distributions for these platforms and architectures. For that, it calls the GitHub API. Be aware of the privacy implications.
 
+## About this fork
+
+This is a fork of [tweaselORG/autopy](https://github.com/tweaselORG/autopy), published on npm as `@simonfischer04/autopy`. It is based on autopy 1.1.1 and adds the following changes:
+
+-   **GitHub API authentication:** If the `GITHUB_TOKEN` environment variable is set, it is used to authenticate the GitHub API requests that look up the Python download. Unauthenticated requests are limited to 60 per hour per IP address, which is easily exceeded in CI or on shared networks; authenticated requests have a much higher limit.
+
 ## Installation
 
-This is a fork of [tweaselORG/autopy](https://github.com/tweaselORG/autopy), published as `@simonfischer04/autopy`. You can install it using yarn or npm:
+You can install autopy using yarn or npm:
 
 ```sh
 yarn add @simonfischer04/autopy
