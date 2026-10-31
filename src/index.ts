@@ -147,6 +147,28 @@ export const downloadPython = async (versionRange: SemverVersionSpecifier) => {
     return pythonDir;
 };
 
+/**
+ * Normalizes a Python package name for comparison: drops extras (`package[extra]`) and applies the [PEP
+ * 503](https://peps.python.org/pep-0503/#normalized-names) normalization, so e.g. `Foo_Bar[baz]` and `foo-bar` name the
+ * same package.
+ */
+const normalizePackageName = (name: string) =>
+    name
+        .replace(/\[.*\]$/, '')
+        .trim()
+        .replace(/[-_.]+/g, '-')
+        .toLowerCase();
+
+/**
+ * Asks pip whether a requirement, including the dependencies of its extras, is satisfied by the installed packages,
+ * without installing anything or reaching the package index. Needs pip 22.2 or newer (`--dry-run`). Older pip versions
+ * fail, so a requirement with extras is then installed on every call, as before names were normalized.
+ */
+const isSatisfiedByPip = (venvPythonBinary: string, r: { name: string; version: string }) =>
+    execa(venvPythonBinary, ['-m', 'pip', 'install', '--dry-run', '--no-index', '--quiet', `${r.name}${r.version}`])
+        .then(() => true)
+        .catch(() => false);
+
 const isVenv = async (dir: string) =>
     (await fse.pathExists(join(dir, 'pyvenv.cfg'))) &&
     (await fse.pathExists(
@@ -175,6 +197,14 @@ export type VenvOptions = {
      * false, the virtual environment may not have (all) the specified packages installed.
      */
     checkRequirements?: boolean;
+    /**
+     * Whether to install all requirements with `pip install --upgrade` when at least one of them is missing or does not
+     * satisfy its version specifier. Defaults to false, which only installs the missing requirements and leaves
+     * installed packages that still satisfy their specifier untouched. With true, pip may also upgrade those, e.g. an
+     * unversioned requirement, or one with a dependency that changed along with another requirement. If nothing is
+     * missing, nothing is installed, so pip does not need to reach the package index.
+     */
+    upgrade?: boolean;
     /**
      * Whether to allow upgrading the Python version of the virtual environment if it is already created. Defaults to
      * true. If false, calling `getVenv()` on an existing venv with an older (non-matching) Python version will throw an
@@ -248,19 +278,32 @@ export const getVenv = async (options: VenvOptions) => {
             '--format',
             'json',
         ]).then((r) => JSON.parse(r.stdout) as { name: string; version: string }[]);
-        const missingPackages = options.requirements.filter(
-            (r) =>
-                r.name !== 'pip' &&
-                !installedPackages.some((p) => p.name === r.name && pep440Satisfies(p.version, r.version))
-        );
+        const missingPackages: VenvOptions['requirements'] = [];
+        for (const r of options.requirements) {
+            if (r.name === 'pip') continue;
+            const installed = installedPackages.some(
+                (p) =>
+                    normalizePackageName(p.name) === normalizePackageName(r.name) &&
+                    pep440Satisfies(p.version, r.version)
+            );
+            // `pip list` only shows that the package itself is installed, not whether the dependencies of the
+            // requested extras are. Let pip check that without installing anything or reaching the package index.
+            if (!installed || (/\[.*\]$/.test(r.name) && !(await isSatisfiedByPip(venvPythonBinary, r))))
+                missingPackages.push(r);
+        }
 
-        if (missingPackages.length > 0)
+        if (missingPackages.length > 0) {
+            const packagesToInstall = options.upgrade
+                ? options.requirements.filter((r) => r.name !== 'pip')
+                : missingPackages;
             await execa(venvPythonBinary, [
                 '-m',
                 'pip',
                 'install',
-                ...missingPackages.map((r) => `${r.name}${r.version}`),
+                ...(options.upgrade ? ['--upgrade'] : []),
+                ...packagesToInstall.map((r) => `${r.name}${r.version}`),
             ]);
+        }
     }
 
     await releaseLock();

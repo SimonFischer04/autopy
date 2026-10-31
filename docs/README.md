@@ -48,10 +48,11 @@ Options for creating or getting a virtual environment with specific requirements
 | `name` | `string` | The name of the virtual environment. |
 | `pythonVersion` | [`SemverVersionSpecifier`](README.md#semverversionspecifier) | The Python version to use for the virtual environment. Passed to [downloadPython](README.md#downloadpython). |
 | `requirements` | { `name`: `string` ; `version`: `string`  }[] | The list of Python packages and their versions to install in the virtual environment. |
+| `upgrade?` | `boolean` | Whether to install all requirements with `pip install --upgrade` when at least one of them is missing or does not satisfy its version specifier. Defaults to false, which only installs the missing requirements and leaves installed packages that still satisfy their specifier untouched. With true, pip may also upgrade those, e.g. an unversioned requirement, or one with a dependency that changed along with another requirement. If nothing is missing, nothing is installed, so pip does not need to reach the package index. |
 
 #### Defined in
 
-[index.ts:157](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L157)
+[index.ts:179](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L179)
 
 ## Functions
 
@@ -107,7 +108,7 @@ A function that can be used to execute Python commands in the virtual environmen
 
 #### Defined in
 
-[index.ts:199](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L199)
+[index.ts:229](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L229)
 
 ___
 
@@ -129,4 +130,4 @@ Removes the virtual environment with the specified name.
 
 #### Defined in
 
-[index.ts:286](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L286)
+[index.ts:329](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L329)
