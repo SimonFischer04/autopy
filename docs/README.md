@@ -52,7 +52,7 @@ Options for creating or getting a virtual environment with specific requirements
 
 #### Defined in
 
-[index.ts:178](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L178)
+[index.ts:179](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L179)
 
 ## Functions
 
@@ -108,7 +108,7 @@ A function that can be used to execute Python commands in the virtual environmen
 
 #### Defined in
 
-[index.ts:228](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L228)
+[index.ts:229](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L229)
 
 ___
 
@@ -130,4 +130,4 @@ Removes the virtual environment with the specified name.
 
 #### Defined in
 
-[index.ts:328](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L328)
+[index.ts:329](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L329)

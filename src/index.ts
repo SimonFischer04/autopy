@@ -161,7 +161,8 @@ const normalizePackageName = (name: string) =>
 
 /**
  * Asks pip whether a requirement, including the dependencies of its extras, is satisfied by the installed packages,
- * without installing anything or reaching the package index.
+ * without installing anything or reaching the package index. Needs pip 22.2 or newer (`--dry-run`). Older pip versions
+ * fail, so a requirement with extras is then installed on every call, as before names were normalized.
  */
 const isSatisfiedByPip = (venvPythonBinary: string, r: { name: string; version: string }) =>
     execa(venvPythonBinary, ['-m', 'pip', 'install', '--dry-run', '--no-index', '--quiet', `${r.name}${r.version}`])
