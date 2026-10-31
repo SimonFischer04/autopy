@@ -159,6 +159,15 @@ const normalizePackageName = (name: string) =>
         .replace(/[-_.]+/g, '-')
         .toLowerCase();
 
+/**
+ * Asks pip whether a requirement, including the dependencies of its extras, is satisfied by the installed packages,
+ * without installing anything or reaching the package index.
+ */
+const isSatisfiedByPip = (venvPythonBinary: string, r: { name: string; version: string }) =>
+    execa(venvPythonBinary, ['-m', 'pip', 'install', '--dry-run', '--no-index', '--quiet', `${r.name}${r.version}`])
+        .then(() => true)
+        .catch(() => false);
+
 const isVenv = async (dir: string) =>
     (await fse.pathExists(join(dir, 'pyvenv.cfg'))) &&
     (await fse.pathExists(
@@ -268,15 +277,19 @@ export const getVenv = async (options: VenvOptions) => {
             '--format',
             'json',
         ]).then((r) => JSON.parse(r.stdout) as { name: string; version: string }[]);
-        const missingPackages = options.requirements.filter(
-            (r) =>
-                r.name !== 'pip' &&
-                !installedPackages.some(
-                    (p) =>
-                        normalizePackageName(p.name) === normalizePackageName(r.name) &&
-                        pep440Satisfies(p.version, r.version)
-                )
-        );
+        const missingPackages: VenvOptions['requirements'] = [];
+        for (const r of options.requirements) {
+            if (r.name === 'pip') continue;
+            const installed = installedPackages.some(
+                (p) =>
+                    normalizePackageName(p.name) === normalizePackageName(r.name) &&
+                    pep440Satisfies(p.version, r.version)
+            );
+            // `pip list` only shows that the package itself is installed, not whether the dependencies of the
+            // requested extras are. Let pip check that without installing anything or reaching the package index.
+            if (!installed || (/\[.*\]$/.test(r.name) && !(await isSatisfiedByPip(venvPythonBinary, r))))
+                missingPackages.push(r);
+        }
 
         if (missingPackages.length > 0) {
             const packagesToInstall = options.upgrade
