@@ -147,6 +147,18 @@ export const downloadPython = async (versionRange: SemverVersionSpecifier) => {
     return pythonDir;
 };
 
+/**
+ * Normalizes a Python package name for comparison: drops extras (`package[extra]`) and applies the [PEP
+ * 503](https://peps.python.org/pep-0503/#normalized-names) normalization, so e.g. `Foo_Bar[baz]` and `foo-bar` name the
+ * same package.
+ */
+const normalizePackageName = (name: string) =>
+    name
+        .replace(/\[.*\]$/, '')
+        .trim()
+        .replace(/[-_.]+/g, '-')
+        .toLowerCase();
+
 const isVenv = async (dir: string) =>
     (await fse.pathExists(join(dir, 'pyvenv.cfg'))) &&
     (await fse.pathExists(
@@ -175,6 +187,14 @@ export type VenvOptions = {
      * false, the virtual environment may not have (all) the specified packages installed.
      */
     checkRequirements?: boolean;
+    /**
+     * Whether to install all requirements with `pip install --upgrade` when at least one of them is missing or does not
+     * satisfy its version specifier. Defaults to false, which only installs the missing requirements and leaves
+     * installed packages that still satisfy their specifier untouched. With true, pip may also upgrade those, e.g. an
+     * unversioned requirement, or one with a dependency that changed along with another requirement. If nothing is
+     * missing, nothing is installed, so pip does not need to reach the package index.
+     */
+    upgrade?: boolean;
     /**
      * Whether to allow upgrading the Python version of the virtual environment if it is already created. Defaults to
      * true. If false, calling `getVenv()` on an existing venv with an older (non-matching) Python version will throw an
@@ -251,16 +271,25 @@ export const getVenv = async (options: VenvOptions) => {
         const missingPackages = options.requirements.filter(
             (r) =>
                 r.name !== 'pip' &&
-                !installedPackages.some((p) => p.name === r.name && pep440Satisfies(p.version, r.version))
+                !installedPackages.some(
+                    (p) =>
+                        normalizePackageName(p.name) === normalizePackageName(r.name) &&
+                        pep440Satisfies(p.version, r.version)
+                )
         );
 
-        if (missingPackages.length > 0)
+        if (missingPackages.length > 0) {
+            const packagesToInstall = options.upgrade
+                ? options.requirements.filter((r) => r.name !== 'pip')
+                : missingPackages;
             await execa(venvPythonBinary, [
                 '-m',
                 'pip',
                 'install',
-                ...missingPackages.map((r) => `${r.name}${r.version}`),
+                ...(options.upgrade ? ['--upgrade'] : []),
+                ...packagesToInstall.map((r) => `${r.name}${r.version}`),
             ]);
+        }
     }
 
     await releaseLock();

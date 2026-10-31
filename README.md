@@ -13,6 +13,8 @@ Autopy works on Windows (32-bit and 64-bit), Linux (x86_64, i686, and aarch64), 
 This is a fork of [tweaselORG/autopy](https://github.com/tweaselORG/autopy), published on npm as `@simonfischer04/autopy`. It is based on autopy 1.1.1 and adds the following changes:
 
 -   **GitHub API authentication:** If the `GITHUB_TOKEN` environment variable is set, it is used to authenticate the GitHub API requests that look up the Python download. Unauthenticated requests are limited to 60 per hour per IP address, which is easily exceeded in CI or on shared networks; authenticated requests have a much higher limit.
+-   **`upgrade` option for `getVenv()`:** When at least one requirement is missing or does not satisfy its version specifier, all requirements are installed with `pip install --upgrade`. pip can then also upgrade installed packages that still satisfy their (or no) specifier, e.g. a tool whose compatible version depends on the version of another requirement. Off by default.
+-   **Requirement names are compared normalized:** Extras (`package[extra]`) are ignored and names are normalized as in [PEP 503](https://peps.python.org/pep-0503/#normalized-names), so a requirement like `Foo_Bar[baz]` is recognized as installed instead of being installed again on every call.
 
 ## Installation
 
