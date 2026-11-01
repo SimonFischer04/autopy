@@ -326,4 +326,27 @@ export const getVenv = async (options: VenvOptions) => {
  *
  * @param name The name of the virtual environment to remove.
  */
-export const removeVenv = async (name: string) => remove(join(await globalCacheDir('autopy'), 'venv', name));
+export const removeVenv = async (name: string) => remove(join(await getCacheDir(), 'venv', name));
+
+/**
+ * Returns the directory where autopy stores the downloaded Python distributions (`python/`) and the virtual
+ * environments (`venv/`). It depends on the platform:
+ *
+ * - On Linux and other POSIX systems: `$XDG_CACHE_HOME/autopy`, or `~/.cache/autopy` if `XDG_CACHE_HOME` is not set.
+ * - On macOS: `~/Library/Caches/autopy`
+ * - On Windows: `%LOCALAPPDATA%\autopy\Cache`
+ *
+ * The directory is created if it doesn't exist yet.
+ *
+ * @returns The absolute path to the autopy cache directory.
+ */
+export const getCacheDir = () => globalCacheDir('autopy');
+
+/**
+ * Removes the whole autopy cache directory, i.e. all downloaded Python distributions and all virtual environments. They
+ * are downloaded and created again on the next call of {@link downloadPython} or {@link getVenv}.
+ *
+ * Don't call this while {@link downloadPython} or {@link getVenv} is running, or while a process started in one of the
+ * virtual environments is still running.
+ */
+export const clearCache = async () => remove(await getCacheDir());

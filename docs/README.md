@@ -11,7 +11,9 @@
 
 ### Functions
 
+- [clearCache](README.md#clearcache)
 - [downloadPython](README.md#downloadpython)
+- [getCacheDir](README.md#getcachedir)
 - [getVenv](README.md#getvenv)
 - [removeVenv](README.md#removevenv)
 
@@ -56,6 +58,26 @@ Options for creating or getting a virtual environment with specific requirements
 
 ## Functions
 
+### clearCache
+
+▸ **clearCache**(): `Promise`<`void`\>
+
+Removes the whole autopy cache directory, i.e. all downloaded Python distributions and all virtual environments. They
+are downloaded and created again on the next call of [downloadPython](README.md#downloadpython) or [getVenv](README.md#getvenv).
+
+Don't call this while [downloadPython](README.md#downloadpython) or [getVenv](README.md#getvenv) is running, or while a process started in one of the
+virtual environments is still running.
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[index.ts:352](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L352)
+
+___
+
 ### downloadPython
 
 ▸ **downloadPython**(`versionRange`): `Promise`<`string`\>
@@ -79,6 +101,31 @@ The path to the Python installation directory.
 #### Defined in
 
 [index.ts:99](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L99)
+
+___
+
+### getCacheDir
+
+▸ **getCacheDir**(): `Promise`<`string`\>
+
+Returns the directory where autopy stores the downloaded Python distributions (`python/`) and the virtual
+environments (`venv/`). It depends on the platform:
+
+- On Linux and other POSIX systems: `$XDG_CACHE_HOME/autopy`, or `~/.cache/autopy` if `XDG_CACHE_HOME` is not set.
+- On macOS: `~/Library/Caches/autopy`
+- On Windows: `%LOCALAPPDATA%\autopy\Cache`
+
+The directory is created if it doesn't exist yet.
+
+#### Returns
+
+`Promise`<`string`\>
+
+The absolute path to the autopy cache directory.
+
+#### Defined in
+
+[index.ts:343](https://github.com/SimonFischer04/autopy/blob/main/src/index.ts#L343)
 
 ___
 
