@@ -73,12 +73,15 @@ const getPythonDownloadLink = async (versionRange: SemverVersionSpecifier) => {
                 })
                 .find((a) => a.version && semverSatifies(a.version, version));
             if (asset) {
-                const checksumAsset = release.assets.find((a) => a.name === `${asset.name}.sha256`);
+                const checksumAsset =
+                    release.assets.find((a) => a.name === 'SHA256SUMS') ??
+                    release.assets.find((a) => a.name === `${asset.name}.sha256`);
                 return {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     version: asset.version!,
                     pythonUrl: asset.browser_download_url,
                     checksumUrl: checksumAsset?.browser_download_url,
+                    checksumFilename: checksumAsset?.name === 'SHA256SUMS' ? asset.name : undefined,
                 };
             }
         }
@@ -124,16 +127,28 @@ export const downloadPython = async (versionRange: SemverVersionSpecifier) => {
     }
 
     // Otherwise, download this Python version.
-    const { version, pythonUrl, checksumUrl } = await getPythonDownloadLink(versionRange);
+    const { version, pythonUrl, checksumUrl, checksumFilename } = await getPythonDownloadLink(versionRange);
     if (!checksumUrl) throw new Error(`No checksum URL for Python ${version} found.`);
 
+    const checksumText = await fetch(checksumUrl).then((res) => {
+        if (!res.ok) throw new Error(`Failed to download checksum for Python ${version}: HTTP ${res.status}.`);
+        return res.text();
+    });
+    // SHA256SUMS uses the sha256sum format: a hash, a space, a text/binary marker, and the filename.
+    const expectedHash = checksumFilename
+        ? checksumText
+              .split(/\r?\n/)
+              .map((line) => /^([a-fA-F0-9]{64}) [ *](.+)$/.exec(line))
+              .find((match) => match?.[2] === checksumFilename)?.[1]
+        : checksumText.trim();
+    if (!expectedHash || !/^[a-fA-F0-9]{64}$/.test(expectedHash))
+        throw new Error(`No valid checksum for Python ${version} found.`);
+
     const pythonArchive = await fetch(pythonUrl).then((res) => res.arrayBuffer());
-    const expectedHash = await fetch(checksumUrl)
-        .then((res) => res.text())
-        .then((t) => t.trim());
 
     const hash = createHash('sha256').update(Buffer.from(pythonArchive)).digest('hex');
-    if (hash !== expectedHash) throw new Error(`Checksum mismatch: Expected "${expectedHash}", got "${hash}".`);
+    if (hash !== expectedHash.toLowerCase())
+        throw new Error(`Checksum mismatch: Expected "${expectedHash}", got "${hash}".`);
 
     const pythonDir = join(cacheDir, 'python', version);
     await fse.ensureDir(pythonDir);
