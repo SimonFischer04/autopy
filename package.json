@@ -36,7 +36,7 @@
         "fix": "yarn eslint . --ignore-path .gitignore --ext .js,.jsx,.ts,.tsx --fix",
         "lint": "tsc && eslint . --ignore-path .gitignore --ext .js,.jsx,.ts,.tsx && git diff --check",
         "prepack": "rm -rf dist && yarn build && yarn typedoc",
-        "test": "echo 'TODO: No tests specified yet.'",
+        "test": "node tests/checksums.test.mjs",
         "watch": "parcel watch"
     },
     "husky": {
